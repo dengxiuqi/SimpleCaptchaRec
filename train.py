@@ -2,6 +2,7 @@ import captchaProducer
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 # global param
 image_width = 160
@@ -35,6 +36,7 @@ def text2label(text):
         label[col, char_map[char]] = 1
     return label
 
+
 def convert2gray(img):
     if len(img.shape) > 2:
         # gray = np.mean(img, -1)
@@ -44,6 +46,7 @@ def convert2gray(img):
         return gray
     else:
         return img
+
 
 def get_next_batch(batch_size, testing=None):
     if not testing:
@@ -70,6 +73,7 @@ def get_next_batch(batch_size, testing=None):
         plt.imshow(image)
         plt.show()
         return X_batch, y_batch
+
 
 def cnn_structure(input):
     input = tf.expand_dims(input, -1)
@@ -109,6 +113,7 @@ def cnn_structure(input):
 
     return result
 
+
 def train():
     output = cnn_structure(X)
     # loss = tf.abs(tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(labels=output, logits=y)))
@@ -116,12 +121,20 @@ def train():
     optimizer = tf.train.AdamOptimizer(learn_rate).minimize(loss)
     y_pred = tf.argmax(output, dimension=-1, name='y_pred')
     accuracy = tf.reduce_mean(tf.cast(tf.equal(y_pred, tf.argmax(y, dimension=-1)), dtype=tf.float32), name='accuracy')
-    saver = tf.train.Saver(max_to_keep=2)
-
+    model_dir = "./model"
     gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.333)
     sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
     sess.run(tf.global_variables_initializer())
-
+    saver = tf.train.Saver(max_to_keep=10)
+    if not os.path.exists(model_dir):       # 检查./model路径是否存在
+        os.mkdir(model_dir)                 # 不存在就创建路径
+        print("create the directory: %s" % model_dir)
+    check_point = tf.train.get_checkpoint_state(model_dir)
+    if check_point and check_point.model_checkpoint_path:
+        saver.restore(sess, check_point.model_checkpoint_path)
+        print("restored %s" % check_point.model_checkpoint_path)
+    else:
+        print("no checkpoint found!")
     for step in range(20001):
         # train
         X_batch, y_batch = get_next_batch(batch_size)
@@ -131,7 +144,7 @@ def train():
             X_batch, y_batch = get_next_batch(batch_size)
             _loss, _acc = sess.run([loss, accuracy], feed_dict={X: X_batch, y: y_batch, keep_prob: 1.})
             print('step:', step, 'accuracy:', _acc, 'loss', _loss)
-            saver.save(sess, './models/crack_capcha.model', global_step=step)
+            saver.save(sess, model_dir + '/crack_capcha.model', global_step=step)
         if _acc >= 0.95:
             break
 

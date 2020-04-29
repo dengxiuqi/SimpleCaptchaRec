@@ -11,6 +11,7 @@ number = ['0','1','2','3','4','5','6','7','8','9']
 alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']  
 ALPHABET = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
 
+
 def random_captcha_text(char_set=number+alphabet+ALPHABET, captcha_size=4):
     # char_set: 验证码包含的字符集
     # captcha_size: 验证码的字符串长度
@@ -33,6 +34,8 @@ def gen_captcha_text_and_image(width=160, height=60, char_set=number+alphabet+AL
     captcha_image = Image.open(captcha)     # 打开图像
     captcha_image = np.array(captcha_image) # 保存成np格式
     return captcha_text, captcha_image
+
+
 if __name__ == '__main__':
     text, image = gen_captcha_text_and_image()  
    
